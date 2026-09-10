@@ -10,24 +10,34 @@ class TestSearchAlgorithms(unittest.TestCase):
         actions, cells = m.solution
         self.assertEqual(len(cells), 10)
         self.assertEqual(m.total_cost, 10)
+        self.assertIsNotNone(m.execution_time)
+        self.assertIsNotNone(m.peak_memory)
+        self.assertGreaterEqual(m.execution_time, 0)
+        self.assertGreater(m.peak_memory, 0)
 
     def test_dls_maze1(self):
         m = limited_depth_search("maze1.txt", 15)
         self.assertIsNotNone(m.solution)
         actions, cells = m.solution
         self.assertEqual(len(cells), 10)
+        self.assertIsNotNone(m.execution_time)
+        self.assertIsNotNone(m.peak_memory)
 
     def test_dls_cutoff(self):
         m = SearchMaze("maze1.txt")
         with self.assertRaises(Exception) as ctx:
             m.solve_limited_depth(5)
         self.assertEqual(str(ctx.exception), "cutoff")
+        self.assertIsNotNone(m.execution_time)
+        self.assertIsNotNone(m.peak_memory)
 
     def test_ids_maze1(self):
         m = iterative_deepening_search("maze1.txt")
         self.assertIsNotNone(m.solution)
         actions, cells = m.solution
         self.assertEqual(len(cells), 10)
+        self.assertIsNotNone(m.execution_time)
+        self.assertIsNotNone(m.peak_memory)
 
     def test_weighted_ucs_maze4(self):
         m = uniform_cost_search("maze4.txt")
