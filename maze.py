@@ -58,20 +58,28 @@ class Maze:
         self.height = len(contents)
         self.width = max(len(line) for line in contents)
 
-        # Keep track of walls
+        # Keep track of walls and costs
         self.walls = []
+        self.costs = {}
         for i in range(self.height):
             row = []
             for j in range(self.width):
                 try:
-                    if contents[i][j] == "A":
+                    ch = contents[i][j]
+                    if ch == "A":
                         self.start = (i, j)
                         row.append(False)
-                    elif contents[i][j] == "B":
+                        self.costs[(i, j)] = 1
+                    elif ch == "B":
                         self.goal = (i, j)
                         row.append(False)
-                    elif contents[i][j] == " ":
+                        self.costs[(i, j)] = 1
+                    elif ch == " ":
                         row.append(False)
+                        self.costs[(i, j)] = 1
+                    elif ch.isdigit():
+                        row.append(False)
+                        self.costs[(i, j)] = int(ch)
                     else:
                         row.append(True)
                 except IndexError:
@@ -79,6 +87,9 @@ class Maze:
             self.walls.append(row)
 
         self.solution = None
+
+    def get_cost(self, state):
+        return self.costs.get(state, 1)
 
 
     def print(self):
@@ -215,15 +226,16 @@ class Maze:
         img.save(filename)
 
 
-if len(sys.argv) != 2:
-    sys.exit("Usage: python maze.py maze.txt")
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python maze.py maze.txt")
 
-m = Maze(sys.argv[1])
-print("Maze:")
-m.print()
-print("Solving...")
-m.solve()
-print("States Explored:", m.num_explored)
-print("Solution:")
-m.print()
-m.output_image("maze.png", show_explored=True)
+    m = Maze(sys.argv[1])
+    print("Maze:")
+    m.print()
+    print("Solving...")
+    m.solve()
+    print("States Explored:", m.num_explored)
+    print("Solution:")
+    m.print()
+    m.output_image("maze.png", show_explored=True)
