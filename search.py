@@ -1,6 +1,29 @@
 import heapq
 import sys
+import time
+import tracemalloc
 from maze import Node, StackFrontier, QueueFrontier, Maze
+
+
+def measure_performance(func):
+    """Decorator to measure execution time and peak memory usage of a search algorithm."""
+    def wrapper(self, *args, **kwargs):
+        is_top_level = not tracemalloc.is_tracing()
+        if is_top_level:
+            tracemalloc.start()
+            start_time = time.perf_counter()
+
+        try:
+            res = func(self, *args, **kwargs)
+            return res
+        finally:
+            if is_top_level:
+                end_time = time.perf_counter()
+                _, peak = tracemalloc.get_traced_memory()
+                tracemalloc.stop()
+                self.execution_time = end_time - start_time
+                self.peak_memory = peak
+    return wrapper
 
 
 class SearchNode:
@@ -41,6 +64,7 @@ class PriorityQueueFrontier:
 
 class SearchMaze(Maze):
 
+    @measure_performance
     def solve_uniform_cost(self):
         """Finds optimal cost solution using Uniform Cost Search."""
         self.num_explored = 0
@@ -89,6 +113,7 @@ class SearchMaze(Maze):
 
     solve_ucs = solve_uniform_cost
 
+    @measure_performance
     def solve_limited_depth(self, limit):
         """Finds a solution using Depth-Limited Search up to the given limit."""
         self.num_explored = 0
@@ -144,6 +169,7 @@ class SearchMaze(Maze):
 
     solve_dls = solve_limited_depth
 
+    @measure_performance
     def solve_iterative_deepening(self, max_limit=None):
         """Finds a solution using Iterative Deepening Search."""
         total_explored = 0
@@ -210,6 +236,25 @@ def iterative_deepening_search(maze_file, max_limit=None):
     return m
 
 
+def format_memory(bytes_val):
+    """Formats bytes value into human-readable string."""
+    if bytes_val is None:
+        return "N/A"
+    if bytes_val < 1024:
+        return f"{bytes_val} bytes"
+    elif bytes_val < 1024 * 1024:
+        return f"{bytes_val / 1024:.2f} KB ({bytes_val} bytes)"
+    else:
+        return f"{bytes_val / (1024 * 1024):.2f} MB ({bytes_val} bytes)"
+
+
+def format_time(seconds_val):
+    """Formats seconds value into human-readable string."""
+    if seconds_val is None:
+        return "N/A"
+    return f"{seconds_val:.6f} s ({seconds_val * 1000:.3f} ms)"
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit("Usage: python search.py maze.txt [algorithm] [limit]")
@@ -248,10 +293,14 @@ if __name__ == "__main__":
             print("States Explored:", search_maze.num_explored)
             print("Total Path Cost:", getattr(search_maze, "total_cost", "N/A"))
             print("Solution Path Length:", len(search_maze.solution[1]))
+            print("Tempo de Execução:", format_time(getattr(search_maze, "execution_time", None)))
+            print("Memória Utilizada (Pico):", format_memory(getattr(search_maze, "peak_memory", None)))
             print("Solution:")
             search_maze.print()
             img_filename = f"maze_{key}.png"
             search_maze.output_image(img_filename, show_explored=True)
             print(f"Saved visualization to {img_filename}\n")
         except Exception as e:
+            print(f"Tempo de Execução:", format_time(getattr(search_maze, "execution_time", None)))
+            print("Memória Utilizada (Pico):", format_memory(getattr(search_maze, "peak_memory", None)))
             print(f"Failed to solve: {e}\n")
